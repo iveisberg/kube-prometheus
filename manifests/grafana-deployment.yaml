@@ -55,6 +55,9 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: true
         - mountPath: /var/lib/grafana
           name: grafana-storage
           readOnly: false
@@ -175,6 +178,21 @@ spec:
         runAsUser: 65534
       serviceAccountName: grafana
       volumes:
+      - name: kube-api-access
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - downwardAPI:
+              items:
+              - path: namespace
+                fieldRef:
+                  fieldPath: metadata.namespace
       - emptyDir: {}
         name: grafana-storage
       - name: grafana-datasources
